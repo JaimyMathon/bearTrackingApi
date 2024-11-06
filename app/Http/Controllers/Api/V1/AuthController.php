@@ -9,25 +9,44 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 
 class AuthController extends Controller
 {
-    public function login(Request $request)
-    {
+    public function login(Request $request){
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
-
-        $user = User::where('email', $request->email)->first();
-
-        if (! $user || ! Hash::check($request->password, $user->password)) {
-            return response()->json(['message' => 'Invalid login credentails'], 401);
+    
+        $ipAddress = $request->ip();
+        $attemptsKey = 'login_attempts_' . $ipAddress;
+        $blockedKey = 'blocked_' . $ipAddress;
+    
+        if (Cache::has($blockedKey)) {
+            return response()->json(['message' => 'Too many login attempts. Try again later'], 429);
         }
+    
+        $user = User::where('email', $request->email)->first();
+    
+        if (! $user || ! Hash::check($request->password, $user->password)) {
 
+            $attempts = Cache::get($attemptsKey, 0) + 1;
+            Cache::put($attemptsKey, $attempts, now()->addMinutes(60));
+    
+            if ($attempts >= 5) {
+                Cache::put($blockedKey, true, now()->addMinutes(1)); // 1 minute for testing otherwise 15 minutes
+                Cache::forget($attemptsKey); 
+            }
+    
+            return response()->json(['message' => 'Invalid login credentials'], 401);
+        }
+    
+        Cache::forget($attemptsKey);
+    
         $user->tokens()->delete();
         $token = $user->createToken('API Token')->plainTextToken;
-
+    
         return response()->json(['Token' => $token], 200);
     }
 

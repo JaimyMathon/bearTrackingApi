@@ -10,18 +10,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function() {
-//     // Route::apiResource('bears', BearController::class);
-//     Route::post('/login', [AuthController::class, 'login']);
-//     Route::apiResource('/bears', BearController::class);
-//     Route::post('/register', [AuthController::class, 'register']);
-// });
-
 Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function() {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/register', [AuthController::class, 'register']);
 
-    Route::middleware(['auth:sanctum', 'throttle:2,2'])->group(function () {
+    Route::middleware(['auth:sanctum', 'throttle:60,60'])->group(function () {
         Route::apiResource('/bears', BearController::class);
     });
 });
