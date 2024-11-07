@@ -10,6 +10,10 @@ class Bear extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'city', 'region', 'latitude', 'longitude'
+        'name', 
+        'city', 
+        'region', 
+        'latitude', 
+        'longitude', 
     ];
 }

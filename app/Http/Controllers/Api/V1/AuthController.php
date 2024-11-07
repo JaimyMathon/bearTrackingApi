@@ -45,9 +45,9 @@ class AuthController extends Controller
         Cache::forget($attemptsKey);
     
         $user->tokens()->delete();
-        $token = $user->createToken('API Token')->plainTextToken;
+        $token = $user->createToken('API Token', ['read'])->plainTextToken;
     
-        return response()->json(['Token' => $token], 200);
+        return response()->json(['access_token' => $token], 200);
     }
 
     public function register(Request $request) {
@@ -69,7 +69,7 @@ class AuthController extends Controller
         $device = substr($request->userAgent() ?? '', 0, 255);
 
         return response()->json([
-            'access_token' => $user->createToken($device)->plainTextToken,
+            'access_token' => $user->createToken($device, ['read'])->plainTextToken,
         ], Response::HTTP_CREATED);
     }
 }
